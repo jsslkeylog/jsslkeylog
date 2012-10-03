@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<style type="text/css">
+body {
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 10pt;
+}
+
+p {
+	margin-left: 2em;
+	margin-right: 2em;
+}
+</style>
+<title>jSSLKeyLog - Java Agent Library to log SSL session keys to a file for Wireshark</title>
+</head>
+<body>
+<h1>jSSLKeyLog - Java Agent Library to log SSL session keys to a file for Wireshark</h1>
+
+<p><i>&copy; 2012 Michael Schierl, <tt>&lt;schierlm at
+users dot sourceforge dot net&gt;</tt></i></p>
+
+<h2>Download</h2>
+
+<h3>Main program</h3>
+<p><b><a href="http://sourceforge.net/projects/jsslkeylog/files/jsslkeylog-1.0/jSSLKeyLog-1.0.zip/download">Download jSSLKeyLog 1.0</a> (62 KB)</b></p>
+<p><a href="http://sourceforge.net/projects/jsslkeylog/files/jsslkeylog-1.0/jSSLKeyLog-1.0-src.zip/download">Download jSSLKeyLog 1.0 source code</a> (19 KB)</p>
+
+<h2>Introduction</h2>
+
+<p>jSSLKeyLog is a Java Agent Library that logs SSL session keys of
+connections created by a Java application to a 
+<a href="https://developer.mozilla.org/en-US/docs/NSS_Key_Log_Format">log
+file understood by Wireshark</a>, so that "Follow SSL stream" can be 
+used to debug SSL connection issues as if the connection was not 
+encrypted. It works with both Java server and client software.</p>
+
+<h2>System requirements</h2>
+
+<p>A Java Runtime environment 1.5 or above is needed. You can get it
+from <a href="http://java.com/">Java.com</a>. The agent library was
+tested with Java 1.5 to 1.7; as it accesses internal API directly,
+it might not work in more recent versions without updating.</p>
+
+<h2>Usage</h2>
+
+<p>First download jSSLKeyLog and extract it.</p>
+<p>Locate the command line used to start the Java program (usually hidden in some
+script or batch file) you want to monitor, it will usually look like <br />
+<tt>java ... -jar file.jar ...</tt> or <tt>java ... some.class.Name ... </tt>.</p>
+<p>Now add an additional parameter directly after the <tt>java</tt> command name, which
+is <tt>-javaagent:jSSLKeyLog.jar=/path/to/your_logfile.log</tt>, so that the complete
+command looks like this:<br />
+<tt>java -javaagent:jSSLKeyLog.jar=/path/to/your_logfile.log ... -jar file.jar
+...</tt></p>
+<p>You can give an absolute or relative path to jSSLKeyLog.jar and to your logfile.</p>
+
+<p>The logfile will be written while the program is running. Now just point Wireshark
+to that logfile and happy SSL decoding!</p>
+
+<h2>Sourceforge project page</h2>
+
+<p>is located <a href="http://sf.net/projects/jsslkeylog/">here</a>.</p>
+
+<h2>Subversion</h2>
+
+<p>You can get the latest source code (and check in your additions
+if you are a developer) from subversion.</p>
+
+<p>Anonymous access: Use <br />
+<tt>svn co http://svn.code.sf.net/p/jsslkeylog/code/trunk jsslkeylog</tt><br />
+or <br/>
+<tt>svn co svn://svn.code.sf.net/p/jsslkeylog/code/trunk jsslkeylog</tt><br />
+
+to check out the latest version. You can also use GUI programs like
+<a href="http://tortoisesvn.tigris.org">TortoiseSVN (Explorer plugin)</a>.</p>
+
+<p>Developer access: Contact me so that I can add you to this
+project. You will need a sourceforge.net account for this. Then you
+can use <br />
+<tt>svn co https://svn.code.sf.net/p/jsslkeylog/code/trunk jsslkeylog</tt><br />
+or
+<tt>svn co svn+ssh://<i>username</i>@svn.code.sf.net/p/jsslkeylog/code/trunk jsslkeylog</tt><br />
+with your credentials. Or submit
+your changes by e-mail; then I will commit them (In the latter case
+please make sure that your <tt>From</tt> address is replyable, in case
+of any questions. <b>If my answer bounces, I will not commit your
+patch!</b>).</p>
+
+<p>You can also <a href="https://sourceforge.net/p/jsslkeylog/code/">browse the repository</a>.</p>
+
+<h2>Contact me</h2>
+
+<p>You can send suggestions and bug reports to my
+<a href="mailto:schierlm%40users.sourceforge.net">sourceforge e-mail address</a>.</p>
+
+<h2>Have fun!</h2>
+
+<p><a href="http://sourceforge.net/projects/jsslkeylog"><img
+	src="http://sflogo.sourceforge.net/sflogo.php?group_id=992672&amp;type=16"
+	width="150" height="40"
+	alt="Get jSSLKeyLog at SourceForge.net. Fast, secure and Free Open Source software downloads" /></a></p>
+</body>
+</html>
