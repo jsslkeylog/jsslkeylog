@@ -17,7 +17,7 @@ System requirements
 
 This program requires Java 1.5 or higher. Download it from www.java.com.
 
-The agent library was tested with Java 1.5 to 1.7; as it accesses internal
+The agent library was tested with Java 1.5 to 1.8; as it accesses internal
 API directly, it might not work in more recent versions without updating.
 
 
@@ -45,14 +45,21 @@ Usage
 - You can give an absolute or relative path to jSSLKeyLog.jar and to your
   logfile.
 
+- If you use a double == between name of the Jar file and the name of
+  your log file, extra verbose comments (containing timestamps and
+  local/remote host/ip) will be written before the individual entries.
+
 - The logfile will be written while the program is running. Now just point
   Wireshark to that logfile and happy SSL decoding!
   
+- Note that for decoding ECDSA ciphers, at least Wireshark 1.11.3 (as of
+  now, a development version, but probably already stable when you are
+  reading this) is required.
 
 License
 ~~~~~~~
 
-Copyright (c) 2012 Michael Schierl
+Copyright (c) 2012, 2014 Michael Schierl
 
 jSSLKeyLog is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -68,6 +75,11 @@ Please send bug reports and suggestions to <schierlm@users.sourceforge.net>.
 
 ChangeLog
 ~~~~~~~~~
+
++++ 2014-04-23 Released version 1.1 +++
+
+- Added verbose logging mode
+- Added support for Java 8
 
 +++ 2012-10-03 Released version 1.0 +++
 
