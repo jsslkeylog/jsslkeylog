@@ -31,8 +31,8 @@ public class LogWriter {
 	}
 
 	public static void logClientRandom(byte[] clientRandom, byte[] masterSecret, SSLSocket conn) {
-		logLine("CLIENT_RANDOM " + hex(clientRandom) + " " + hex(masterSecret),
-				conn.getLocalSocketAddress() + " -> " + conn.getRemoteSocketAddress());
+		logLine("CLIENT_RANDOM " + hex(clientRandom) + " " + hex(masterSecret), 
+				conn == null ? null : conn.getLocalSocketAddress() + " -> " + conn.getRemoteSocketAddress());
 	}
 
 	private static String hex(byte[] encoded) {
