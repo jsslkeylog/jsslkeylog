@@ -15,9 +15,11 @@ was not encrypted. It works with both Java server and client software.
 System requirements
 ~~~~~~~~~~~~~~~~~~~
 
-This program requires Java 1.5 or higher. Download it from www.java.com.
+This program requires Java 1.7 or higher. Download it from www.java.com.
+In case you want to use it with Java 1.5 or 1.6, use version 1.1 of this
+program instead. 
 
-The agent library was tested with Java 1.5 to 1.8; as it accesses internal
+The agent library was tested with Java 1.7 to 1.9; as it accesses internal
 API directly, it might not work in more recent versions without updating.
 
 
@@ -59,7 +61,7 @@ Usage
 License
 ~~~~~~~
 
-Copyright (c) 2012, 2014 Michael Schierl
+Copyright (c) 2012, 2014, 2017 Michael Schierl
 
 jSSLKeyLog is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -75,6 +77,10 @@ Please send bug reports and suggestions to <schierlm@users.sourceforge.net>.
 
 ChangeLog
 ~~~~~~~~~
+
++++ 2017-09-28 Released version 1.2 +++
+
+- Added support for Java 9
 
 +++ 2014-04-23 Released version 1.1 +++
 

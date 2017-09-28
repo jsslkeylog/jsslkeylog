@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.sf.jsslkeylog</groupId>
 	<artifactId>jSSLKeyLog</artifactId>
-	<version>1.1.1-SNAPSHOT</version>
+	<version>1.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>jSSLKeyLog</name>
 	<url>http://jsslkeylog.sf.net/</url>
@@ -14,7 +14,7 @@
 		<dependency>
 			<groupId>org.ow2.asm</groupId>
 			<artifactId>asm</artifactId>
-			<version>5.0.2</version>
+			<version>6.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -30,8 +30,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.4</version>
 				<configuration>
-					<source>1.5</source>
-					<target>1.5</target>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
 			<plugin>
