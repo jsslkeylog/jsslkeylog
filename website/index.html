@@ -17,14 +17,14 @@ p {
 <body>
 <h1>jSSLKeyLog - Java Agent Library to log SSL session keys to a file for Wireshark</h1>
 
-<p><i>&copy; 2012, 2014 Michael Schierl, <tt>&lt;schierlm at
+<p><i>&copy; 2012, 2014, 2017 Michael Schierl, <tt>&lt;schierlm at
 users dot sourceforge dot net&gt;</tt></i></p>
 
 <h2>Download</h2>
 
 <h3>Main program</h3>
-<p><b><a href="http://sourceforge.net/projects/jsslkeylog/files/jsslkeylog-1.1/jSSLKeyLog-1.1.zip/download">Download jSSLKeyLog 1.1</a> (70 KB)</b></p>
-<p><a href="http://sourceforge.net/projects/jsslkeylog/files/jsslkeylog-1.1/jSSLKeyLog-1.1-src.zip/download">Download jSSLKeyLog 1.1 source code</a> (20 KB)</p>
+<p><b><a href="http://sourceforge.net/projects/jsslkeylog/files/jsslkeylog-1.2/jSSLKeyLog-1.2.zip/download">Download jSSLKeyLog 1.2</a> (109 KB)</b></p>
+<p><a href="http://sourceforge.net/projects/jsslkeylog/files/jsslkeylog-1.2/jSSLKeyLog-1.2-src.zip/download">Download jSSLKeyLog 1.2 source code</a> (20 KB)</p>
 
 <h2>Introduction</h2>
 
@@ -37,9 +37,10 @@ encrypted. It works with both Java server and client software.</p>
 
 <h2>System requirements</h2>
 
-<p>A Java Runtime environment 1.5 or above is needed. You can get it
-from <a href="http://java.com/">Java.com</a>. The agent library was
-tested with Java 1.5 to 1.8; as it accesses internal API directly,
+<p>A Java Runtime environment 1.7 or above is needed. You can get it
+from <a href="http://java.com/">Java.com</a>. In case you want to use it with Java 1.5
+or 1.6, use version 1.1 of this program instead. The agent library was
+tested with Java 1.7 to 1.9; as it accesses internal API directly,
 it might not work in more recent versions without updating.</p>
 
 <h2>Usage</h2>
@@ -62,9 +63,7 @@ local/remote host/ip) will be written before the individual entries.</p>
 <p>The logfile will be written while the program is running. Now just point Wireshark
 to that logfile and happy SSL decoding!</p>
 
-<p>Note that for decoding ECDSA ciphers, at least Wireshark 1.11.3 (as of
-now, a development version, but probably already stable when you are
-reading this) is required.</p>
+<p>Note that for decoding ECDSA ciphers, at least Wireshark 1.11.3 is required.</p>
 
 <h2>Sourceforge project page</h2>
 
