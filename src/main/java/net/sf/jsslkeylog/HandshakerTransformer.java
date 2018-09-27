@@ -16,19 +16,16 @@ public class HandshakerTransformer extends AbstractTransformer {
 
 	@Override
 	protected void visitEndOfMethod(MethodVisitor mv, String desc) {
-		String packageName = className.replace("/Handshaker", "");
-		String masterSecretType = "Ljavax/crypto/SecretKey;";
-		if (desc.equals("([B)V")) {
-			masterSecretType = "[B";
-		}
+		final String packageName = "sun/security/ssl";
+		final String masterSecretType = "Ljavax/crypto/SecretKey;";
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitFieldInsn(GETFIELD, className, "clnt_random", "L" + packageName + "/RandomCookie;");
 		mv.visitFieldInsn(GETFIELD, packageName + "/RandomCookie", "random_bytes", "[B");
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitFieldInsn(GETFIELD, className, "session", "L" + packageName + "/SSLSessionImpl;");
-		mv.visitMethodInsn(INVOKEVIRTUAL, packageName + "/SSLSessionImpl", "getMasterSecret", "()" + masterSecretType);
+		mv.visitMethodInsn(INVOKEVIRTUAL, packageName + "/SSLSessionImpl", "getMasterSecret", "()" + masterSecretType, false);
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitFieldInsn(GETFIELD, className, "conn", "L"+packageName+"/SSLSocketImpl;");
-		mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logClientRandom", "([B" + masterSecretType + "Ljavax/net/ssl/SSLSocket;)V");
+		mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logClientRandom", "([B" + masterSecretType + "Ljavax/net/ssl/SSLSocket;)V", false);
 	}
 }

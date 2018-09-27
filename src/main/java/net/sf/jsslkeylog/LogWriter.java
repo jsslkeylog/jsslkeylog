@@ -19,19 +19,15 @@ public class LogWriter {
 	public static final String VERBOSE_PROPERTY_NAME = "net.sf.jsslkeylog.verbose";
 
 	public static void logRSA(byte[] encryptedPreMasterSecret, SecretKey preMasterSecret) {
-		logRSA(encryptedPreMasterSecret, preMasterSecret.getEncoded());
+		logLine("RSA " + hex(encryptedPreMasterSecret).substring(0, 16) + " " + hex(preMasterSecret.getEncoded()), null);
 	}
 
-	public static void logRSA(byte[] encryptedPreMasterSecret, byte[] preMasterSecret) {
-		logLine("RSA " + hex(encryptedPreMasterSecret).substring(0, 16) + " " + hex(preMasterSecret), null);
+	public static void logClientRandom(byte[] clientRandom, SecretKey masterSecret, Object maybeConn) {
+		logClientRandom(clientRandom, masterSecret, maybeConn instanceof SSLSocket ? (SSLSocket) maybeConn : null);
 	}
-
+	
 	public static void logClientRandom(byte[] clientRandom, SecretKey masterSecret, SSLSocket conn) {
-		logClientRandom(clientRandom, masterSecret.getEncoded(), conn);
-	}
-
-	public static void logClientRandom(byte[] clientRandom, byte[] masterSecret, SSLSocket conn) {
-		logLine("CLIENT_RANDOM " + hex(clientRandom) + " " + hex(masterSecret), 
+		logLine("CLIENT_RANDOM " + hex(clientRandom) + " " + hex(masterSecret.getEncoded()), 
 				conn == null ? null : conn.getLocalSocketAddress() + " -> " + conn.getRemoteSocketAddress());
 	}
 

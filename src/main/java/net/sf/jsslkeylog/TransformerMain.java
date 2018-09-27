@@ -1,6 +1,7 @@
 package net.sf.jsslkeylog;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -25,18 +26,33 @@ public class TransformerMain implements ClassFileTransformer {
 	 * Classes to transform that contain RSA secrets (by Java version).
 	 */
 	private static String[] RSA_CLASSES = {
-			"com/sun/net/ssl/internal/ssl/PreMasterSecret", // Java 5
-			"com/sun/net/ssl/internal/ssl/RSAClientKeyExchange", // Java 6
 			"sun/security/ssl/RSAClientKeyExchange", // Java 7
+			"sun/security/ssl/RSAClientKeyExchange$RSAClientKeyExchangeMessage", // Java 11
 	};
-
+	
 	/**
-	 * Classes to transform that contain CLIENT_RANDOM secrets (by Java
-	 * version).
+	 * Class to transform that contains RSA secrets in server case.
 	 */
-	private static String[] HANDSHAKER_CLASSES = {
-			"com/sun/net/ssl/internal/ssl/Handshaker", // Java 5, Java 6
-			"sun/security/ssl/Handshaker" // Java 7
+	private static String RSA_PREMASTER_SECRET_CLASS= "sun/security/ssl/RSAKeyExchange$RSAPremasterSecret"; // Java 11
+
+	
+	/**
+	 * Class to transform that contains CLIENT_RANDOM secrets.
+	 */
+	private static String HANDSHAKER_CLASS = "sun/security/ssl/Handshaker"; // Java 7
+	
+	/**
+	 * Classes to transform to obtain CLIENT_RANDOM secrets.
+	 */
+	private static String[] CLIENT_KEY_EXCHANGE_CLASSES = { // Java 11
+			  "sun/security/ssl/RSAClientKeyExchange$RSAClientKeyExchangeProducer",
+			  "sun/security/ssl/RSAClientKeyExchange$RSAClientKeyExchangeConsumer",
+			  "sun/security/ssl/ECDHClientKeyExchange$ECDHEClientKeyExchangeProducer",
+			  "sun/security/ssl/ECDHClientKeyExchange$ECDHEClientKeyExchangeConsumer",
+			  "sun/security/ssl/ECDHClientKeyExchange$ECDHClientKeyExchangeProducer",
+			  "sun/security/ssl/ECDHClientKeyExchange$ECDHClientKeyExchangeConsumer",
+			  "sun/security/ssl/DHClientKeyExchange$DHClientKeyExchangeProducer",
+			  "sun/security/ssl/DHClientKeyExchange$DHClientKeyExchangeConsumer"
 	};
 
 	/**
@@ -45,7 +61,9 @@ public class TransformerMain implements ClassFileTransformer {
 	public static void premain(String agentArgs, Instrumentation inst) throws IOException {
 		List<String> rawClassNamesToInstrument = new ArrayList<String>();
 		rawClassNamesToInstrument.addAll(Arrays.asList(RSA_CLASSES));
-		rawClassNamesToInstrument.addAll(Arrays.asList(HANDSHAKER_CLASSES));
+		rawClassNamesToInstrument.add(HANDSHAKER_CLASS);
+		rawClassNamesToInstrument.add(RSA_PREMASTER_SECRET_CLASS);
+		rawClassNamesToInstrument.addAll(Arrays.asList(CLIENT_KEY_EXCHANGE_CLASSES));
 		Set<String> classNamesToInstrument = new HashSet<String>();
 		for (String rawClassName : rawClassNamesToInstrument) {
 			classNamesToInstrument.add(rawClassName.replace('/', '.'));
@@ -71,9 +89,15 @@ public class TransformerMain implements ClassFileTransformer {
 				return transform(classfileBuffer, new RSAClientKeyExchangeTransformer(rsaClass));
 			}
 		}
-		for (String handshakerClass : HANDSHAKER_CLASSES) {
-			if (className.equals(handshakerClass)) {
-				return transform(classfileBuffer, new HandshakerTransformer(handshakerClass));
+		if (className.equals(HANDSHAKER_CLASS)) {
+			return transform(classfileBuffer, new HandshakerTransformer(HANDSHAKER_CLASS));
+		}
+		if (className.equals(RSA_PREMASTER_SECRET_CLASS)) {
+			return transform(classfileBuffer, new RSAPremasterSecretTransformer(RSA_PREMASTER_SECRET_CLASS));
+		}
+		for (String clientKeyExchangeClass : CLIENT_KEY_EXCHANGE_CLASSES) {
+			if (className.equals(clientKeyExchangeClass)) {
+				return transform(classfileBuffer, new ClientKeyExchangeTransformer(clientKeyExchangeClass));
 			}
 		}
 		return null;

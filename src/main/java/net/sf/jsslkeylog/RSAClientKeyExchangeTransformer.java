@@ -16,14 +16,18 @@ public class RSAClientKeyExchangeTransformer extends AbstractTransformer {
 
 	@Override
 	protected void visitEndOfMethod(MethodVisitor mv, String desc) {
-		String preMasterType = "Ljavax/crypto/SecretKey;";
-		if (className.endsWith("/PreMasterSecret")) {
-			preMasterType = "[B";
-		}
+		if (!desc.contains("Ljava/security/PublicKey;") && !desc.contains("Ljava/security/PrivateKey;"))
+			return;
+		final String preMasterType = "Ljavax/crypto/SecretKey;";
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitFieldInsn(GETFIELD, className, "encrypted", "[B");
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitFieldInsn(GETFIELD, className, "preMaster", preMasterType);
-		mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logRSA", "([B" + preMasterType + ")V");
+		if (className.endsWith("Exchange$RSAClientKeyExchangeMessage")) {
+			mv.visitVarInsn(ALOAD, 2);
+			mv.visitFieldInsn(GETFIELD, "sun/security/ssl/RSAKeyExchange$RSAPremasterSecret", "premasterSecret", preMasterType);
+		} else {
+			mv.visitVarInsn(ALOAD, 0);
+			mv.visitFieldInsn(GETFIELD, className, "preMaster", preMasterType);
+		}
+		mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logRSA", "([B" + preMasterType + ")V", false);
 	}
 }

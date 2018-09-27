@@ -13,6 +13,9 @@ import org.objectweb.asm.MethodVisitor;
  */
 public abstract class AbstractTransformer extends ClassVisitor {
 
+	@SuppressWarnings("deprecation")
+	protected static final int API = ASM7_EXPERIMENTAL;
+	
 	protected final String className;
 	private final String methodName;
 
@@ -25,7 +28,7 @@ public abstract class AbstractTransformer extends ClassVisitor {
 	 *            Name of the method(s) that should be modified
 	 */
 	public AbstractTransformer(String className, String methodName) {
-		super(ASM4);
+		super(API);
 		this.className = className;
 		this.methodName = methodName;
 	}
@@ -41,10 +44,10 @@ public abstract class AbstractTransformer extends ClassVisitor {
 	public MethodVisitor visitMethod(int access, String name, final String desc, String signature, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 		if (name.equals(methodName)) {
-			return new MethodVisitor(ASM4, mv) {
+			return new MethodVisitor(API, mv) {
 				@Override
 				public void visitInsn(int opcode) {
-					if (opcode == RETURN) {
+					if (opcode == RETURN || opcode == ARETURN) {
 						visitEndOfMethod(mv, desc);
 					}
 					super.visitInsn(opcode);
@@ -78,17 +81,17 @@ public abstract class AbstractTransformer extends ClassVisitor {
 	private void copyLogMethods() {
 		try {
 			ClassReader cr = new ClassReader(LogWriter.class.getResourceAsStream("/" + LogWriter.class.getName().replace('.', '/') + ".class"));
-			cr.accept(new ClassVisitor(ASM4) {
+			cr.accept(new ClassVisitor(API) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-					return new MethodVisitor(ASM4, AbstractTransformer.this.visitMethod(access, "$LogWriter$" + name, desc, signature, exceptions)) {
+					return new MethodVisitor(API, AbstractTransformer.this.visitMethod(access, "$LogWriter$" + name, desc, signature, exceptions)) {
 						@Override
-						public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+						public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
 							if (owner.equals(LogWriter.class.getName().replace('.', '/'))) {
 								owner = className;
 								name = "$LogWriter$" + name;
 							}
-							super.visitMethodInsn(opcode, owner, name, desc);
+							super.visitMethodInsn(opcode, owner, name, desc, itf);
 						}
 					};
 				}
