@@ -11,7 +11,7 @@ import org.objectweb.asm.MethodVisitor;
 public class HandshakerTransformer extends AbstractTransformer {
 
 	public HandshakerTransformer(String className) {
-		super(className, "calculateKeys");
+		super(className, "calculateKeys", 3);
 	}
 
 	@Override

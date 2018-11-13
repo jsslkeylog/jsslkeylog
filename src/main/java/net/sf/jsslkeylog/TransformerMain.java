@@ -1,7 +1,6 @@
 package net.sf.jsslkeylog;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -56,6 +55,16 @@ public class TransformerMain implements ClassFileTransformer {
 	};
 
 	/**
+	 *  Classes to transform to obtain TLS1.3 secrets.
+	 */
+	private static String[] KEY_AGREEMENT_KEY_DERIVATION_CLASSES = { // Java 11
+			"sun/security/ssl/DHKeyExchange$DHEKAGenerator$DHEKAKeyDerivation",
+			"sun/security/ssl/ECDHKeyExchange$ECDHEKAKeyDerivation"
+	};
+	
+	private static String SECRET_DERIVATION_CLASS = "sun/security/ssl/SSLSecretDerivation"; // Java 11
+	
+	/**
 	 * Agent entry point.
 	 */
 	public static void premain(String agentArgs, Instrumentation inst) throws IOException {
@@ -64,6 +73,8 @@ public class TransformerMain implements ClassFileTransformer {
 		rawClassNamesToInstrument.add(HANDSHAKER_CLASS);
 		rawClassNamesToInstrument.add(RSA_PREMASTER_SECRET_CLASS);
 		rawClassNamesToInstrument.addAll(Arrays.asList(CLIENT_KEY_EXCHANGE_CLASSES));
+		rawClassNamesToInstrument.addAll(Arrays.asList(KEY_AGREEMENT_KEY_DERIVATION_CLASSES));
+		rawClassNamesToInstrument.add(SECRET_DERIVATION_CLASS);
 		Set<String> classNamesToInstrument = new HashSet<String>();
 		for (String rawClassName : rawClassNamesToInstrument) {
 			classNamesToInstrument.add(rawClassName.replace('/', '.'));
@@ -99,6 +110,14 @@ public class TransformerMain implements ClassFileTransformer {
 			if (className.equals(clientKeyExchangeClass)) {
 				return transform(classfileBuffer, new ClientKeyExchangeTransformer(clientKeyExchangeClass));
 			}
+		}
+		for (String keyAgreementClass : KEY_AGREEMENT_KEY_DERIVATION_CLASSES) {
+			if (className.equals(keyAgreementClass)) {
+				return transform(classfileBuffer, new KeyAgreementKeyDerivationTransformer(keyAgreementClass));
+			}
+		}		
+		if (className.equals(SECRET_DERIVATION_CLASS)) {
+			return transform(classfileBuffer, new SecretDerivationTransformer(SECRET_DERIVATION_CLASS));
 		}
 		return null;
 	}

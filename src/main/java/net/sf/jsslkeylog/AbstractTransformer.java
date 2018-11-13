@@ -13,11 +13,11 @@ import org.objectweb.asm.MethodVisitor;
  */
 public abstract class AbstractTransformer extends ClassVisitor {
 
-	@SuppressWarnings("deprecation")
-	protected static final int API = ASM7_EXPERIMENTAL;
+	protected static final int API = ASM7;
 	
 	protected final String className;
 	private final String methodName;
+	private final int methodStack;
 
 	/**
 	 * Class constructor.
@@ -27,10 +27,11 @@ public abstract class AbstractTransformer extends ClassVisitor {
 	 * @param methodName
 	 *            Name of the method(s) that should be modified
 	 */
-	public AbstractTransformer(String className, String methodName) {
+	public AbstractTransformer(String className, String methodName, int methodStack) {
 		super(API);
 		this.className = className;
 		this.methodName = methodName;
+		this.methodStack = methodStack;
 	}
 
 	/**
@@ -51,6 +52,13 @@ public abstract class AbstractTransformer extends ClassVisitor {
 						visitEndOfMethod(mv, desc);
 					}
 					super.visitInsn(opcode);
+				}
+				
+				@Override
+				public void visitMaxs(int maxStack, int maxLocals) {
+					if (methodStack > maxStack)
+						maxStack = methodStack;
+					super.visitMaxs(maxStack, maxLocals);
 				}
 			};
 		}
@@ -84,6 +92,8 @@ public abstract class AbstractTransformer extends ClassVisitor {
 			cr.accept(new ClassVisitor(API) {
 				@Override
 				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+					if (name.equals("<init>"))
+						return super.visitMethod(access, name, desc, signature, exceptions);
 					return new MethodVisitor(API, AbstractTransformer.this.visitMethod(access, "$LogWriter$" + name, desc, signature, exceptions)) {
 						@Override
 						public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {

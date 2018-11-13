@@ -2,6 +2,7 @@ package net.sf.jsslkeylog;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.PrivateKey;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -17,6 +18,7 @@ public class LogWriter {
 
 	public static final String LOGFILE_PROPERTY_NAME = "net.sf.jsslkeylog.logfilename";
 	public static final String VERBOSE_PROPERTY_NAME = "net.sf.jsslkeylog.verbose";
+	public static final String TLS13_DEBUG_PROPERTY_NAME = "net.sf.jsslkeylog.tls13.debug";
 
 	public static void logRSA(byte[] encryptedPreMasterSecret, SecretKey preMasterSecret) {
 		logLine("RSA " + hex(encryptedPreMasterSecret).substring(0, 16) + " " + hex(preMasterSecret.getEncoded()), null);
@@ -27,8 +29,29 @@ public class LogWriter {
 	}
 	
 	public static void logClientRandom(byte[] clientRandom, SecretKey masterSecret, SSLSocket conn) {
-		logLine("CLIENT_RANDOM " + hex(clientRandom) + " " + hex(masterSecret.getEncoded()), 
+		logLine("CLIENT_RANDOM " + hex(clientRandom) + " " + hex(masterSecret.getEncoded()),
 				conn == null ? null : conn.getLocalSocketAddress() + " -> " + conn.getRemoteSocketAddress());
+	}
+
+	public static void logTLS13KeyAgreement(SecretKey resultSecret, SecretKey inputSecret, PrivateKey inputPrivate, String algorithm, byte[] clientRandom, Object maybeConn) {
+		if (inputSecret != null) {
+			String logName = null;
+			switch(algorithm) {
+			case "TlsClientHandshakeTrafficSecret": logName="CLIENT_HANDSHAKE_TRAFFIC_SECRET"; break;
+			case "TlsServerHandshakeTrafficSecret": logName="SERVER_HANDSHAKE_TRAFFIC_SECRET"; break;
+			case "TlsClientAppTrafficSecret": logName="CLIENT_TRAFFIC_SECRET_0"; break;
+			case "TlsServerAppTrafficSecret": logName="SERVER_TRAFFIC_SECRET_0"; break;
+			}
+			if (logName != null) {
+				logLine(logName+" " + hex(clientRandom) + " " + hex(resultSecret.getEncoded()), 
+						maybeConn instanceof SSLSocket ? (((SSLSocket) maybeConn).getLocalSocketAddress() + "->" + ((SSLSocket) maybeConn).getRemoteSocketAddress()) : null);
+			}
+		}
+		if (Boolean.getBoolean(TLS13_DEBUG_PROPERTY_NAME)) {
+			String inputKey = inputSecret == null ? "PRIVKEY "+hex(inputPrivate.getEncoded()) : "SECKEY "+hex(inputSecret.getEncoded());
+			logLine("TLS13_DEBUG " + algorithm + " " + hex(clientRandom) + " " + hex(resultSecret.getEncoded())+" "+inputKey, 
+					maybeConn instanceof SSLSocket ? (((SSLSocket) maybeConn).getLocalSocketAddress() + "->" + ((SSLSocket) maybeConn).getRemoteSocketAddress()) : null);
+		}
 	}
 
 	private static String hex(byte[] encoded) {

@@ -12,8 +12,7 @@ import org.objectweb.asm.MethodVisitor;
 public class ClientKeyExchangeTransformer extends AbstractTransformer {
 
 	public ClientKeyExchangeTransformer(String className) {
-		super(className, null);
-		System.out.println("---> "+className);
+		super(className, null, 0);
 	}
 
 	@Override
@@ -63,7 +62,6 @@ public class ClientKeyExchangeTransformer extends AbstractTransformer {
 					mv.visitFieldInsn(GETFIELD, "sun/security/ssl/TransportContext", "transport", "Lsun/security/ssl/SSLTransport;");
 					mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logClientRandom", "([BLjavax/crypto/SecretKey;Ljava/lang/Object;)V", false);
 
-					System.out.println("\tFOUND IT!");
 					lastAloadVar = handshakeContextVar = -1;
 				}
 			};
@@ -73,16 +71,6 @@ public class ClientKeyExchangeTransformer extends AbstractTransformer {
 
 	@Override
 	protected void visitEndOfMethod(MethodVisitor mv, String desc) {
-		final String packageName = "sun/security/ssl";
-		final String masterSecretType = "Ljavax/crypto/SecretKey;";
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitFieldInsn(GETFIELD, className, "clnt_random", "L" + packageName + "/RandomCookie;");
-		mv.visitFieldInsn(GETFIELD, packageName + "/RandomCookie", "random_bytes", "[B");
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitFieldInsn(GETFIELD, className, "session", "L" + packageName + "/SSLSessionImpl;");
-		mv.visitMethodInsn(INVOKEVIRTUAL, packageName + "/SSLSessionImpl", "getMasterSecret", "()" + masterSecretType, false);
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitFieldInsn(GETFIELD, className, "conn", "L" + packageName + "/SSLSocketImpl;");
-		mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logClientRandom", "([B" + masterSecretType + "Ljavax/net/ssl/SSLSocket;)V", false);
+		throw new IllegalStateException();
 	}
 }

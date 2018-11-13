@@ -11,7 +11,7 @@ import org.objectweb.asm.MethodVisitor;
 public class RSAClientKeyExchangeTransformer extends AbstractTransformer {
 
 	public RSAClientKeyExchangeTransformer(String className) {
-		super(className, "<init>");
+		super(className, "<init>", 2);
 	}
 
 	@Override

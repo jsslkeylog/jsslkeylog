@@ -11,7 +11,7 @@ import org.objectweb.asm.MethodVisitor;
 public class RSAPremasterSecretTransformer extends AbstractTransformer {
 
 	public RSAPremasterSecretTransformer(String className) {
-		super(className, "decode");
+		super(className, "decode", 3);
 	}
 
 	@Override
