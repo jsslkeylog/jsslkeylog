@@ -13,7 +13,7 @@ import org.objectweb.asm.MethodVisitor;
  */
 public abstract class AbstractTransformer extends ClassVisitor {
 
-	protected static final int API = ASM7;
+	protected static final int API = ASM9;
 	
 	protected final String className;
 	private final String methodName;
