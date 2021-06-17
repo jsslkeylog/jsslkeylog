@@ -87,7 +87,11 @@ public class TransformerMain implements ClassFileTransformer {
 		inst.addTransformer(new TransformerMain());
 		// parse agent arguments; first argument is always file name
 		final String[] args = agentArgs.split(Pattern.quote(Character.toString(File.pathSeparatorChar)));
+		boolean detailed = false;
 		for (int i = 1; i < args.length; i++) {
+			if (args[i].equals("detailed")) {
+				detailed = true;
+			}
 		}
 		String fileNameArg = args[0];
 
@@ -95,6 +99,9 @@ public class TransformerMain implements ClassFileTransformer {
 		// then activate detailed logging
 		if (fileNameArg.startsWith("=")) {
 			fileNameArg = fileNameArg.substring(1);
+			detailed = true;
+		}
+		if (detailed) {
 			System.setProperty(LogWriter.VERBOSE_PROPERTY_NAME, "true");
 		}
 		final String sslLogPath = new File(fileNameArg).getCanonicalPath();
