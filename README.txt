@@ -19,8 +19,8 @@ This program requires Java 1.7 or higher. Download it from www.java.com.
 In case you want to use it with Java 1.5 or 1.6, use version 1.1 of this
 program instead. 
 
-The agent library was tested with Java 1.7 to 15; as it accesses internal
-API directly, it might not work in more recent versions without updating.
+The agent library was tested with Java 1.7 to 18; as it accesses internal
+API directly, it will likely not work in more recent versions without updating.
 
 
 Usage
