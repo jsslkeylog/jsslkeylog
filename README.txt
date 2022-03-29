@@ -56,6 +56,9 @@ Usage
   your log file, extra verbose comments (containing timestamps and
   local/remote host/ip) will be written before the individual entries.
 
+  You can also specify the option :detailed in the same manner as :quiet
+  to activate the extra verbose comments.
+
 - The logfile will be written while the program is running. Now just point
   Wireshark to that logfile and happy SSL decoding!
   
