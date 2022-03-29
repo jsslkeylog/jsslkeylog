@@ -47,6 +47,11 @@ Usage
 - You can give an absolute or relative path to jSSLKeyLog.jar and to your
   logfile.
 
+- If you do not want a message printed to the console, add a quiet option
+  after the file name, like this (use ; instead of : on Windows):
+
+  -javaagent:jSSLKeyLog.jar=logfile.log:quiet
+
 - If you use a double == between name of the Jar file and the name of
   your log file, extra verbose comments (containing timestamps and
   local/remote host/ip) will be written before the individual entries.
