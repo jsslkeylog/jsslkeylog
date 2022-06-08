@@ -52,11 +52,18 @@ public class ClientKeyExchangeTransformer extends AbstractTransformer {
 						return;
 					}
 					if (lastAloadVar == -1 || handshakeContextVar == -1) throw new IllegalStateException();
-					
+
+					int masterSecretVar = lastAloadVar;
+
+					mv.visitVarInsn(ALOAD, handshakeContextVar);
+					mv.visitFieldInsn(GETFIELD, "sun/security/ssl/HandshakeContext", "handshakeSession", "Lsun/security/ssl/SSLSessionImpl;");
+					mv.visitVarInsn(ALOAD, masterSecretVar);
+					mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logSessionKey", "(Ljavax/net/ssl/SSLSession;Ljavax/crypto/SecretKey;)V", false);
+
 					mv.visitVarInsn(ALOAD, handshakeContextVar);
 					mv.visitFieldInsn(GETFIELD, "sun/security/ssl/HandshakeContext", "clientHelloRandom", "Lsun/security/ssl/RandomCookie;");
 					mv.visitFieldInsn(GETFIELD, "sun/security/ssl/RandomCookie", "randomBytes", "[B");
-					mv.visitVarInsn(ALOAD, lastAloadVar);
+					mv.visitVarInsn(ALOAD, masterSecretVar);
 					mv.visitVarInsn(ALOAD, handshakeContextVar);
 					mv.visitFieldInsn(GETFIELD, "sun/security/ssl/HandshakeContext", "conContext", "Lsun/security/ssl/TransportContext;");
 					mv.visitFieldInsn(GETFIELD, "sun/security/ssl/TransportContext", "transport", "Lsun/security/ssl/SSLTransport;");
