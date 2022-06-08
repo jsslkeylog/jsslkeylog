@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 
 /**
@@ -32,6 +33,18 @@ public class LogWriter {
 		logLine("CLIENT_RANDOM " + hex(clientRandom) + " " + hex(masterSecret.getEncoded()),
 				conn == null ? null : conn.getLocalSocketAddress() + " -> " + conn.getRemoteSocketAddress());
 	}
+
+	/**
+	 * RSA Session-ID:4b8569d40aac2dba1fb8e1ad5260f1b310bd050515f3f14b59cf1bcc05e29bed
+	 * Master-Key
+	 * :6fd5bf0156d037cc7091bcd9c91b4d82ced2d78e4d76569d9b5b15f34c98c598d00ce80dd7b758094fded82ac166b9c8
+	 * @param session
+	 * @param masterSecret
+	 */
+	public static void logSessionKey(SSLSession session, SecretKey masterSecret) {
+		logLine("RSA Session-ID:" + hex(session.getId()) + " Master-Key:" + hex(masterSecret.getEncoded()), null);
+	}
+
 
 	public static void logTLS13KeyAgreement(SecretKey resultSecret, SecretKey inputSecret, PrivateKey inputPrivate, String algorithm, byte[] clientRandom, Object maybeConn) {
 		if (inputSecret != null) {
