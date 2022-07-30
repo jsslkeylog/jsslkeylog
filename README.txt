@@ -47,10 +47,13 @@ Usage
 - You can give an absolute or relative path to jSSLKeyLog.jar and to your
   logfile.
 
-- If you do not want a message printed to the console, add a quiet option
+- If you do not want a message printed to the console, add a :quiet option
   after the file name, like this (use ; instead of : on Windows):
 
   -javaagent:jSSLKeyLog.jar=logfile.log:quiet
+
+  If you prefer the message to appear on stderr instead of stdout, add
+  the :stderr option instead.
 
 - If you use a double == between name of the Jar file and the name of
   your log file, extra verbose comments (containing timestamps and
@@ -83,7 +86,7 @@ Usage
 License
 ~~~~~~~
 
-Copyright (c) 2012, 2014, 2017, 2018, 2020 Michael Schierl
+Copyright (c) 2012, 2014, 2017, 2018, 2020, 2022 Michael Schierl
 
 jSSLKeyLog is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
