@@ -19,7 +19,7 @@ This program requires Java 1.7 or higher. Download it from www.java.com.
 In case you want to use it with Java 1.5 or 1.6, use version 1.1 of this
 program instead. 
 
-The agent library was tested with Java 1.7 to 21; as it accesses internal
+The agent library was tested with Java 1.7 to 25; as it accesses internal
 API directly, it will likely not work in more recent versions without updating.
 
 
@@ -86,7 +86,7 @@ Usage
 License
 ~~~~~~~
 
-Copyright (c) 2012, 2014, 2017, 2018, 2020, 2022 Michael Schierl
+Copyright (c) 2012, 2014, 2017, 2018, 2020, 2022, 2025 Michael Schierl
 
 jSSLKeyLog is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
