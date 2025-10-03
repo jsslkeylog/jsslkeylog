@@ -1,8 +1,8 @@
 package net.sf.jsslkeylog;
 
-import static org.objectweb.asm.Opcodes.*;
-
-import org.objectweb.asm.MethodVisitor;
+import java.lang.classfile.CodeBuilder;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.MethodTypeDesc;
 
 /**
  * Transformer to transform <tt>RSAPremasterSecret</tt> classes to log
@@ -11,15 +11,15 @@ import org.objectweb.asm.MethodVisitor;
 public class RSAPremasterSecretTransformer extends AbstractTransformer {
 
 	public RSAPremasterSecretTransformer(String className) {
-		super(className, "decode", 3);
+		super(className, "decode");
 	}
 
 	@Override
-	protected void visitEndOfMethod(MethodVisitor mv, String desc) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 2);
-		mv.visitInsn(SWAP);
-		mv.visitFieldInsn(GETFIELD, "sun/security/ssl/RSAKeyExchange$RSAPremasterSecret", "premasterSecret", "Ljavax/crypto/SecretKey;");
-		mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logRSA", "([BLjavax/crypto/SecretKey;)V", false);
+	protected void visitEndOfMethod(CodeBuilder builder, MethodTypeDesc desc) {
+		builder.dup();
+		builder.aload(2);
+		builder.swap();
+		builder.getfield(ClassDesc.ofInternalName("sun/security/ssl/RSAKeyExchange$RSAPremasterSecret"), "premasterSecret", ClassDesc.ofDescriptor("Ljavax/crypto/SecretKey;"));
+		builder.invokestatic(ClassDesc.ofInternalName(className), "$LogWriter$logRSA", MethodTypeDesc.ofDescriptor("([BLjavax/crypto/SecretKey;)V"), false);
 	}
 }

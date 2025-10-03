@@ -1,23 +1,30 @@
 package net.sf.jsslkeylog;
 
-import static org.objectweb.asm.Opcodes.*;
-
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
+import java.io.InputStream;
+import java.lang.classfile.ClassBuilder;
+import java.lang.classfile.ClassElement;
+import java.lang.classfile.ClassFile;
+import java.lang.classfile.ClassModel;
+import java.lang.classfile.ClassTransform;
+import java.lang.classfile.CodeBuilder;
+import java.lang.classfile.MethodModel;
+import java.lang.classfile.MethodTransform;
+import java.lang.classfile.instruction.InvokeInstruction;
+import java.lang.classfile.instruction.ReturnInstruction;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.MethodTypeDesc;
+import java.net.URI;
+import java.nio.file.Paths;
 
 /**
  * Abstract base class of all transformer classes.
  */
-public abstract class AbstractTransformer extends ClassVisitor {
+public abstract class AbstractTransformer implements ClassTransform {
 
-	protected static final int API = ASM9;
-	
 	protected final String className;
 	private final String methodName;
-	private final int methodStack;
 
 	/**
 	 * Class constructor.
@@ -27,87 +34,70 @@ public abstract class AbstractTransformer extends ClassVisitor {
 	 * @param methodName
 	 *            Name of the method(s) that should be modified
 	 */
-	public AbstractTransformer(String className, String methodName, int methodStack) {
-		super(API);
+	public AbstractTransformer(String className, String methodName) {
 		this.className = className;
 		this.methodName = methodName;
-		this.methodStack = methodStack;
-	}
-
-	/**
-	 * Set the next visitor for this {@link ClassVisitor}.
-	 */
-	public void setNextVisitor(ClassVisitor cv) {
-		this.cv = cv;
 	}
 
 	@Override
-	public MethodVisitor visitMethod(int access, String name, final String desc, String signature, String[] exceptions) {
-		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-		if (name.equals(methodName)) {
-			return new MethodVisitor(API, mv) {
-				@Override
-				public void visitInsn(int opcode) {
-					if (opcode == RETURN || opcode == ARETURN) {
-						visitEndOfMethod(mv, desc);
-					}
-					super.visitInsn(opcode);
+	public void accept(ClassBuilder builder, ClassElement element) {
+		if (element instanceof MethodModel mm && mm.methodName().equalsString(methodName)) {
+			builder.transformMethod(mm, MethodTransform.transformingCode((b, e) -> {
+				if (e instanceof ReturnInstruction) {
+					visitEndOfMethod(b, mm.methodTypeSymbol());
 				}
-				
-				@Override
-				public void visitMaxs(int maxStack, int maxLocals) {
-					if (methodStack > maxStack)
-						maxStack = methodStack;
-					super.visitMaxs(maxStack, maxLocals);
-				}
-			};
+				b.with(e);
+			}));
+		} else {
+			builder.with(element);
 		}
-		return mv;
 	}
 
 	/**
 	 * Called to append bytecodes at the end of the method (before every
-	 * {@link org.objectweb.asm.Opcodes#RETURN} instruction.
+	 * {@link ReturnInstruction}).
 	 * 
 	 * @param mv
 	 *            MethodVisitor of the current method
 	 * @param desc
 	 *            Method signature
 	 */
-	protected abstract void visitEndOfMethod(MethodVisitor mv, String desc);
+	protected abstract void visitEndOfMethod(CodeBuilder builder, MethodTypeDesc desc);
 
 	@Override
-	public void visitEnd() {
-		copyLogMethods();
-		super.visitEnd();
+	public void atEnd(ClassBuilder builder) {
+		copyLogMethods(builder);
 	}
 
 	/**
 	 * Copy methods from the {@link LogWriter} class into the currently
 	 * instrumented class.
 	 */
-	private void copyLogMethods() {
-		try {
-			ClassReader cr = new ClassReader(LogWriter.class.getResourceAsStream("/" + LogWriter.class.getName().replace('.', '/') + ".class"));
-			cr.accept(new ClassVisitor(API) {
-				@Override
-				public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-					if (name.equals("<init>"))
-						return super.visitMethod(access, name, desc, signature, exceptions);
-					return new MethodVisitor(API, AbstractTransformer.this.visitMethod(access, "$LogWriter$" + name, desc, signature, exceptions)) {
-						@Override
-						public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-							if (owner.equals(LogWriter.class.getName().replace('.', '/'))) {
-								owner = className;
-								name = "$LogWriter$" + name;
-							}
-							super.visitMethodInsn(opcode, owner, name, desc, itf);
-						}
-					};
-				}
-			}, 0);
+	private void copyLogMethods(ClassBuilder builder) {
+		String logWriterDesc = LogWriter.class.getName().replace('.', '/');
+		ClassDesc targetClassDesc = ClassDesc.ofInternalName(className);
+		ClassModel cm;
+		try (InputStream in = LogWriter.class.getResourceAsStream("/" + logWriterDesc + ".class");
+				ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+			in.transferTo(baos);
+			cm = ClassFile.of().parse(baos.toByteArray());
 		} catch (IOException ex) {
 			throw new RuntimeException("Unable to copy log methods", ex);
+		}
+		for (MethodModel mm : cm.methods()) {
+			if (mm.methodName().equalsString("<init>")) {
+				continue;
+			}
+			builder.withMethodBody(builder.constantPool().utf8Entry("$LogWriter$" + mm.methodName().stringValue()), mm.methodType(), mm.flags().flagsMask(),
+					cb -> {
+						mm.code().get().forEach(ce -> {
+							if (ce instanceof InvokeInstruction ii && ii.owner().name().equalsString(logWriterDesc)) {
+								cb.invoke(ii.opcode(), targetClassDesc, "$LogWriter$" + ii.name().stringValue(), ii.typeSymbol(), ii.isInterface());
+							} else {
+								cb.with(ce);
+							}
+						});
+					});
 		}
 	}
 }

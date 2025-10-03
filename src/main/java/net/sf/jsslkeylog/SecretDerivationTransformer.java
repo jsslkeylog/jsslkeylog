@@ -1,9 +1,15 @@
 package net.sf.jsslkeylog;
 
-import static org.objectweb.asm.Opcodes.*;
-
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
+import java.lang.classfile.ClassBuilder;
+import java.lang.classfile.ClassElement;
+import java.lang.classfile.CodeBuilder;
+import java.lang.classfile.CodeElement;
+import java.lang.classfile.CodeTransform;
+import java.lang.classfile.FieldModel;
+import java.lang.classfile.MethodModel;
+import java.lang.classfile.MethodTransform;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.MethodTypeDesc;
 
 /**
  * Transformer to transform <tt>SSLSecretDerivation</tt> classes to log
@@ -12,50 +18,47 @@ import org.objectweb.asm.MethodVisitor;
 public class SecretDerivationTransformer extends AbstractTransformer {
 
 	public SecretDerivationTransformer(String className) {
-		super(className, "deriveKey", 7);
+		super(className, "deriveKey");
 	}
 
 	@Override
-		public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-			if (name.equals("secret")) {
-				super.visitField(18,"$context","Lsun/security/ssl/HandshakeContext;",null,null);
-			}
-			return super.visitField(access, name, descriptor, signature, value);
-		}
-
-	@Override
-	public MethodVisitor visitMethod(int access, String name, final String desc, String signature, String[] exceptions) {
-		MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-		if (name.equals("<init>") && desc.equals("(Lsun/security/ssl/HandshakeContext;Ljavax/crypto/SecretKey;)V")) {
-			return new MethodVisitor(API, mv) {
+	public void accept(ClassBuilder builder, ClassElement element) {
+		if(element instanceof FieldModel fi && fi.fieldName().equalsString("secret")) {
+			builder.withField("$context", ClassDesc.ofDescriptor("Lsun/security/ssl/HandshakeContext;"), 18);
+			builder.with(fi);
+		} else if (element instanceof MethodModel mm && mm.methodName().equalsString("<init>") && mm.methodType().equalsString("(Lsun/security/ssl/HandshakeContext;Ljavax/crypto/SecretKey;)V"))  {
+			builder.transformMethod(mm, MethodTransform.transformingCode(new CodeTransform() {
 				@Override
-				public void visitCode() {
-					super.visitCode();
-					super.visitVarInsn(ALOAD, 0);
-					super.visitVarInsn(ALOAD, 1);
-					mv.visitFieldInsn(PUTFIELD, className, "$context", "Lsun/security/ssl/HandshakeContext;");
+				public void atStart(CodeBuilder builder) {
+					builder.aload(0);
+					builder.aload(1);
+					builder.putfield(ClassDesc.ofInternalName(className), "$context", ClassDesc.ofDescriptor("Lsun/security/ssl/HandshakeContext;"));
 				}
-			};
+				@Override
+				public void accept(CodeBuilder builder, CodeElement element) {
+					builder.with(element);
+				}
+			}));
+		} else {
+			super.accept(builder, element);
 		}
-		return mv;
 	}
 
-
 	@Override
-	protected void visitEndOfMethod(MethodVisitor mv, String desc) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitFieldInsn(GETFIELD, className, "secret", "Ljavax/crypto/SecretKey;"); 
-		mv.visitInsn(ACONST_NULL);
-		mv.visitVarInsn(ALOAD, 1);
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitFieldInsn(GETFIELD, className, "$context", "Lsun/security/ssl/HandshakeContext;");
-		mv.visitFieldInsn(GETFIELD, "sun/security/ssl/HandshakeContext", "clientHelloRandom", "Lsun/security/ssl/RandomCookie;");
-		mv.visitFieldInsn(GETFIELD, "sun/security/ssl/RandomCookie", "randomBytes", "[B");
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitFieldInsn(GETFIELD, className, "$context", "Lsun/security/ssl/HandshakeContext;");
-		mv.visitFieldInsn(GETFIELD, "sun/security/ssl/HandshakeContext", "conContext", "Lsun/security/ssl/TransportContext;");
-		mv.visitFieldInsn(GETFIELD, "sun/security/ssl/TransportContext", "transport", "Lsun/security/ssl/SSLTransport;");
-		mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logTLS13KeyAgreement", "(Ljavax/crypto/SecretKey;Ljavax/crypto/SecretKey;Ljava/security/PrivateKey;Ljava/lang/String;[BLjava/lang/Object;)V", false);
+	protected void visitEndOfMethod(CodeBuilder builder, MethodTypeDesc desc) {
+		builder.dup();
+		builder.aload(0);
+		builder.getfield(ClassDesc.ofInternalName(className), "secret", ClassDesc.ofDescriptor("Ljavax/crypto/SecretKey;")); 
+		builder.aconst_null();
+		builder.aload(1);
+		builder.aload(0);
+		builder.getfield(ClassDesc.ofInternalName(className), "$context", ClassDesc.ofDescriptor("Lsun/security/ssl/HandshakeContext;"));
+		builder.getfield(ClassDesc.ofInternalName("sun/security/ssl/HandshakeContext"), "clientHelloRandom", ClassDesc.ofDescriptor("Lsun/security/ssl/RandomCookie;"));
+		builder.getfield(ClassDesc.ofInternalName("sun/security/ssl/RandomCookie"), "randomBytes", ClassDesc.ofDescriptor("[B"));
+		builder.aload(0);
+		builder.getfield(ClassDesc.ofInternalName(className), "$context", ClassDesc.ofDescriptor("Lsun/security/ssl/HandshakeContext;"));
+		builder.getfield(ClassDesc.ofInternalName("sun/security/ssl/HandshakeContext"), "conContext", ClassDesc.ofDescriptor("Lsun/security/ssl/TransportContext;"));
+		builder.getfield(ClassDesc.ofInternalName("sun/security/ssl/TransportContext"), "transport", ClassDesc.ofDescriptor("Lsun/security/ssl/SSLTransport;"));
+		builder.invokestatic(ClassDesc.ofInternalName(className), "$LogWriter$logTLS13KeyAgreement", MethodTypeDesc.ofDescriptor("(Ljavax/crypto/SecretKey;Ljavax/crypto/SecretKey;Ljava/security/PrivateKey;Ljava/lang/String;[BLjava/lang/Object;)V"), false);
 	}
 }

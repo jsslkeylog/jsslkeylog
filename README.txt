@@ -22,6 +22,8 @@ program instead.
 The agent library was tested with Java 1.7 to 25; as it accesses internal
 API directly, it will likely not work in more recent versions without updating.
 
+[NOTE: This branch will require Java 24 or later. I will make a combined
+release (or probably multiple ones) before this gets merged.]
 
 Usage
 ~~~~~

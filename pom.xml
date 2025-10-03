@@ -10,13 +10,6 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>org.ow2.asm</groupId>
-			<artifactId>asm</artifactId>
-			<version>9.8</version>
-		</dependency>
-	</dependencies>
 	<build>
 		<plugins>
 			<plugin>
@@ -48,29 +41,6 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.2.0</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<shadedArtifactAttached>true</shadedArtifactAttached>
-							<createDependencyReducedPom>false</createDependencyReducedPom>
-							<relocations>
-								<relocation>
-									<pattern>org.objectweb.asm</pattern>
-									<shadedPattern>net.sf.jsslkeylog.internal.org.objectweb.asm</shadedPattern>
-								</relocation>
-							</relocations>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>1.8</version>
 				<executions>
@@ -79,7 +49,7 @@
 						<configuration>
 							<target>
 								<copy
-									file="${project.basedir}/target/${project.build.finalName}-shaded.jar"
+									file="${project.basedir}/target/${project.build.finalName}.jar"
 									tofile="${project.basedir}/jSSLKeyLog.jar" />
 								<copy todir="${project.basedir}/target/dist/src">
 									<fileset dir="${project.basedir}" includes="pom.xml,*.txt,src/**" />

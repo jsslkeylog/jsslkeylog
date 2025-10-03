@@ -4,19 +4,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.classfile.ClassFile;
+import java.lang.classfile.ClassTransform;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.StandardOpenOption;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * Main transformer class that implements the required transformations to get
@@ -28,25 +34,19 @@ public class TransformerMain implements ClassFileTransformer {
 	 * Classes to transform that contain RSA secrets (by Java version).
 	 */
 	private static String[] RSA_CLASSES = {
-			"sun/security/ssl/RSAClientKeyExchange", // Java 7
-			"sun/security/ssl/RSAClientKeyExchange$RSAClientKeyExchangeMessage", // Java 11
+			"sun/security/ssl/RSAClientKeyExchange$RSAClientKeyExchangeMessage",
 	};
-	
+
 	/**
 	 * Class to transform that contains RSA secrets in server case.
 	 */
-	private static String RSA_PREMASTER_SECRET_CLASS= "sun/security/ssl/RSAKeyExchange$RSAPremasterSecret"; // Java 11
+	private static String RSA_PREMASTER_SECRET_CLASS= "sun/security/ssl/RSAKeyExchange$RSAPremasterSecret";
 
-	
-	/**
-	 * Class to transform that contains CLIENT_RANDOM secrets.
-	 */
-	private static String HANDSHAKER_CLASS = "sun/security/ssl/Handshaker"; // Java 7
-	
+
 	/**
 	 * Classes to transform to obtain CLIENT_RANDOM secrets.
 	 */
-	private static String[] CLIENT_KEY_EXCHANGE_CLASSES = { // Java 11
+	private static String[] CLIENT_KEY_EXCHANGE_CLASSES = {
 			  "sun/security/ssl/RSAClientKeyExchange$RSAClientKeyExchangeProducer",
 			  "sun/security/ssl/RSAClientKeyExchange$RSAClientKeyExchangeConsumer",
 			  "sun/security/ssl/ECDHClientKeyExchange$ECDHEClientKeyExchangeProducer",
@@ -60,26 +60,27 @@ public class TransformerMain implements ClassFileTransformer {
 	/**
 	 *  Classes to transform to obtain TLS1.3 secrets.
 	 */
-	private static String[] KEY_AGREEMENT_KEY_DERIVATION_CLASSES = { // Java 11
+	private static String[] KEY_AGREEMENT_KEY_DERIVATION_CLASSES = {
 			"sun/security/ssl/DHKeyExchange$DHEKAGenerator$DHEKAKeyDerivation",
 			"sun/security/ssl/ECDHKeyExchange$ECDHEKAKeyDerivation"
 	};
-	
-	private static String SECRET_DERIVATION_CLASS = "sun/security/ssl/SSLSecretDerivation"; // Java 11
-	
+
+	private static String SECRET_DERIVATION_CLASS = "sun/security/ssl/SSLSecretDerivation";
+
+	private static Map<String,Function<String,ClassTransform>> classesToTransform = new ConcurrentHashMap<>();
+
 	/**
 	 * Agent entry point.
 	 */
 	public static void premain(String agentArgs, Instrumentation inst) throws IOException {
-		List<String> rawClassNamesToInstrument = new ArrayList<String>();
-		rawClassNamesToInstrument.addAll(Arrays.asList(RSA_CLASSES));
-		rawClassNamesToInstrument.add(HANDSHAKER_CLASS);
-		rawClassNamesToInstrument.add(RSA_PREMASTER_SECRET_CLASS);
-		rawClassNamesToInstrument.addAll(Arrays.asList(CLIENT_KEY_EXCHANGE_CLASSES));
-		rawClassNamesToInstrument.addAll(Arrays.asList(KEY_AGREEMENT_KEY_DERIVATION_CLASSES));
-		rawClassNamesToInstrument.add(SECRET_DERIVATION_CLASS);
+		putClassesToTransform(RSA_CLASSES, RSAClientKeyExchangeTransformer::new);
+		classesToTransform.put(RSA_PREMASTER_SECRET_CLASS, RSAPremasterSecretTransformer::new);
+		putClassesToTransform(CLIENT_KEY_EXCHANGE_CLASSES, ClientKeyExchangeTransformer::new);
+		putClassesToTransform(KEY_AGREEMENT_KEY_DERIVATION_CLASSES, KeyAgreementKeyDerivationTransformer::new);
+		classesToTransform.put(SECRET_DERIVATION_CLASS, SecretDerivationTransformer::new);
+
 		Set<String> classNamesToInstrument = new HashSet<String>();
-		for (String rawClassName : rawClassNamesToInstrument) {
+		for (String rawClassName : classesToTransform.keySet()) {
 			classNamesToInstrument.add(rawClassName.replace('/', '.'));
 		}
 		for (Class<?> c : inst.getAllLoadedClasses()) {
@@ -127,39 +128,19 @@ public class TransformerMain implements ClassFileTransformer {
 		console.println("Logging all SSL session keys to: " + sslLogPath);
 	}
 
-	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-		for (String rsaClass : RSA_CLASSES) {
-			if (className.equals(rsaClass)) {
-				return transform(classfileBuffer, new RSAClientKeyExchangeTransformer(rsaClass));
-			}
+	private static void putClassesToTransform(String[] classNames, Function<String,ClassTransform> constructor) {
+		for(String className: classNames) {
+			classesToTransform.put(className, constructor);
 		}
-		if (className.equals(HANDSHAKER_CLASS)) {
-			return transform(classfileBuffer, new HandshakerTransformer(HANDSHAKER_CLASS));
-		}
-		if (className.equals(RSA_PREMASTER_SECRET_CLASS)) {
-			return transform(classfileBuffer, new RSAPremasterSecretTransformer(RSA_PREMASTER_SECRET_CLASS));
-		}
-		for (String clientKeyExchangeClass : CLIENT_KEY_EXCHANGE_CLASSES) {
-			if (className.equals(clientKeyExchangeClass)) {
-				return transform(classfileBuffer, new ClientKeyExchangeTransformer(clientKeyExchangeClass));
-			}
-		}
-		for (String keyAgreementClass : KEY_AGREEMENT_KEY_DERIVATION_CLASSES) {
-			if (className.equals(keyAgreementClass)) {
-				return transform(classfileBuffer, new KeyAgreementKeyDerivationTransformer(keyAgreementClass));
-			}
-		}		
-		if (className.equals(SECRET_DERIVATION_CLASS)) {
-			return transform(classfileBuffer, new SecretDerivationTransformer(SECRET_DERIVATION_CLASS));
-		}
-		return null;
 	}
 
-	private byte[] transform(byte[] classfileBuffer, AbstractTransformer transformer) {
-		ClassReader cr = new ClassReader(classfileBuffer);
-		ClassWriter cw = new ClassWriter(0);
-		transformer.setNextVisitor(cw);
-		cr.accept(transformer, 0);
-		return cw.toByteArray();
+	@Override
+	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+		Function<String, ClassTransform> transformConstructor = classesToTransform.get(className);
+		if (transformConstructor != null) {
+			ClassFile cf = ClassFile.of();
+			return cf.transformClass(cf.parse(classfileBuffer), transformConstructor.apply(className));
+		}
+		return null;
 	}
 }

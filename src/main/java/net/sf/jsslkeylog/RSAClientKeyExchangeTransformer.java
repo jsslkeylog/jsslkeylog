@@ -1,8 +1,9 @@
 package net.sf.jsslkeylog;
 
-import static org.objectweb.asm.Opcodes.*;
-
-import org.objectweb.asm.MethodVisitor;
+import java.lang.classfile.CodeBuilder;
+import java.lang.constant.ClassDesc;
+import java.lang.constant.ConstantDescs;
+import java.lang.constant.MethodTypeDesc;
 
 /**
  * Transformer to transform <tt>RSAClientKeyExchange</tt> and
@@ -11,23 +12,18 @@ import org.objectweb.asm.MethodVisitor;
 public class RSAClientKeyExchangeTransformer extends AbstractTransformer {
 
 	public RSAClientKeyExchangeTransformer(String className) {
-		super(className, "<init>", 2);
+		super(className, "<init>");
 	}
 
 	@Override
-	protected void visitEndOfMethod(MethodVisitor mv, String desc) {
-		if (!desc.contains("Ljava/security/PublicKey;") && !desc.contains("Ljava/security/PrivateKey;"))
+	protected void visitEndOfMethod(CodeBuilder builder, MethodTypeDesc desc) {
+		if (!desc.descriptorString().contains("Ljava/security/PublicKey;") && !desc.descriptorString().contains("Ljava/security/PrivateKey;"))
 			return;
 		final String preMasterType = "Ljavax/crypto/SecretKey;";
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitFieldInsn(GETFIELD, className, "encrypted", "[B");
-		if (className.endsWith("Exchange$RSAClientKeyExchangeMessage")) {
-			mv.visitVarInsn(ALOAD, 2);
-			mv.visitFieldInsn(GETFIELD, "sun/security/ssl/RSAKeyExchange$RSAPremasterSecret", "premasterSecret", preMasterType);
-		} else {
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitFieldInsn(GETFIELD, className, "preMaster", preMasterType);
-		}
-		mv.visitMethodInsn(INVOKESTATIC, className, "$LogWriter$logRSA", "([B" + preMasterType + ")V", false);
+		builder.aload(0);
+		builder.getfield(ClassDesc.ofInternalName(className), "encrypted", ConstantDescs.CD_byte.arrayType());
+		builder.aload(2);
+		builder.getfield(ClassDesc.ofInternalName("sun/security/ssl/RSAKeyExchange$RSAPremasterSecret"), "premasterSecret", ClassDesc.ofDescriptor(preMasterType));
+		builder.invokestatic(ClassDesc.ofInternalName(className), "$LogWriter$logRSA", MethodTypeDesc.of(ConstantDescs.CD_void, ConstantDescs.CD_byte.arrayType(), ClassDesc.ofDescriptor(preMasterType)), false);
 	}
 }
