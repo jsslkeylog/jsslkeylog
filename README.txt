@@ -22,6 +22,11 @@ program instead.
 The agent library was tested with Java 1.7 to 25; as it accesses internal
 API directly, it will likely not work in more recent versions without updating.
 
+As of jSSLKeyLog 1.4, a second agent library is provided that uses the new
+java.lang.classfile API for instrumentation. This library requires at least
+Java 24, but may more likely work with future Java versions it was not tested
+with.
+
 
 Usage
 ~~~~~
@@ -52,8 +57,8 @@ Usage
 
   -javaagent:jSSLKeyLog.jar=logfile.log:quiet
 
-  If you prefer the message to appear on stderr instead of stdout, add
-  the :stderr option instead.
+  If you prefer the message to appear on stdout instead of stderr, add
+  the :stdout option instead.
 
 - If you use a double == between name of the Jar file and the name of
   your log file, extra verbose comments (containing timestamps and
@@ -102,6 +107,15 @@ Please send bug reports and suggestions to <schierlm@users.sourceforge.net>.
 
 ChangeLog
 ~~~~~~~~~
+
++++ 2020-10-24 Released version 1.4 +++
+
+- Added support for Java 16 - 25
+- Added second version that uses java.lang.classfile API instead of ASM
+- Added support for logging cached session keys
+- Added new 'quiet' and 'detailed' options
+- Initialization output is written to stderr by default, unless the new
+  'stdout' option is used.
 
 +++ 2020-10-24 Released version 1.3 +++
 
